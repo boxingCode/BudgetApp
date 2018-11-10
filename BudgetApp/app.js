@@ -1,4 +1,5 @@
 var budgetController = (function () {
+
     var totalIncome = 0, totalExpense = 0;
     var incomeProto = function (id, description, value) {
         this.id = id;
@@ -7,7 +8,7 @@ var budgetController = (function () {
     };
     var expenseProto = function (id, description, value, percentage) {
         this.id = id,
-            this.description = description;
+        this.description = description;
         this.value = value;
         this.percentage = percentage;
     };
@@ -40,17 +41,48 @@ var budgetController = (function () {
         }
     }
 
+    var updateTotalExpenseIncomeAndBudget = function(type,classN,availClass){
+        if(type==='income')
+            document.querySelector(classN).textContent = '+' + totalIncome;
+        else
+            document.querySelector(classN).textContent = '-' + totalExpense;
+
+        var totalBudget = totalIncome - totalExpense;
+        document.querySelector(availClass).textContent = totalBudget;
+    }
+
+    var updateIncomeExpenseArray = function(itemId,type,classN,availClass){
+        if(type==='income'){
+            this.incomeArray.splice(itemId-1,1);
+            totalIncome=0;
+            for(var i=0;i<this.incomeArray.length;i++){
+                totalIncome=totalIncome + parseInt(this.incomeArray[i].value);
+            }
+            updateTotalExpenseIncomeAndBudget(type,classN,availClass);
+        }else{
+            this.expenseArray.splice(itemId-1,1);
+            totalExpense=0;
+            for(var i=0;i<this.expenseArray.length;i++){
+                totalExpense = parseInt(this.expenseArray[i].value) + totalExpense;
+            }
+            updateTotalExpenseIncomeAndBudget(type,classN,availClass);
+        }
+    }
+
     return {
         incomeArray: [],
         expenseArray: [],
         incomeProto,
         expenseProto,
         budgetManager,
-        calculateTotalExpensePercent
+        calculateTotalExpensePercent,
+        updateIncomeExpenseArray
     }
+
 })();
 
 var uiController = (function () {
+
     var className = {
         addType: '.add__type',
         addDescription: '.add__description',
@@ -61,8 +93,8 @@ var uiController = (function () {
         totalIncomeClass: '.budget__income--value',
         totalExpenseClass: '.budget__expenses--value',
         totalBudgetValue: '.budget__value',
-        removeExpenseOrIncome: '.item__delete--btn',
-        expensePercentage: '.budget__expenses--percentage'
+        expensePercentage: '.budget__expenses--percentage',
+        containerClass : '.container'
     };
 
     var addHTMLToPage = function (obj, type) {
@@ -79,7 +111,7 @@ var uiController = (function () {
 
             html = '<div class="item clearfix" id="expense-%expenseId%"><div class="item__description">%expenseDescription%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">%percentage%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
 
-            newHTML = html.replace('%expenseId%', 'obj.id');
+            newHTML = html.replace('%expenseId%', obj.id);
             newHTML = newHTML.replace('%expenseDescription%', obj.description);
             newHTML = newHTML.replace('%value%', obj.value);
             newHTML = newHTML.replace('%percentage%', obj.percentage+'%');
@@ -95,6 +127,7 @@ var uiController = (function () {
 })();
 
 var appController = (function (budgetCtrl, uiCtrl) {
+
     var type, description, value, idIncome = 1, idExpense = 1;
 
     var eventCodeHandle = function () {
@@ -130,13 +163,36 @@ var appController = (function (budgetCtrl, uiCtrl) {
 
         // if remove item is pressed
 
-        document.querySelector(uiCtrl.className.removeExpenseOrIncome).addEventListener('click', function () {
-            console.log("remove item clicked")
-        });
-
+        document.querySelector(uiCtrl.className.containerClass).addEventListener('click', eventDelegateForRemoveButton);
+        
         //cleaning value from description value
         clearFields();
 
+    }
+
+    //function to remove item from UI and update budget
+    var eventDelegateForRemoveButton = function(event){
+        var itemId = event.target.parentNode.parentNode.parentNode.parentNode.id,type,splitItem,idCopy;
+        idCopy = itemId;
+        if(itemId){
+            splitItem = itemId.split('-');
+            type = splitItem[0];
+            itemId= splitItem[1];
+            if(type === 'income'){
+                budgetCtrl.updateIncomeExpenseArray(itemId,type,uiController.className.totalIncomeClass, uiController.className.totalBudgetValue);
+                idIncome--;
+            }                
+            else{
+                budgetCtrl.updateIncomeExpenseArray(itemId,type,uiController.className.totalExpenseClass, uiController.className.totalBudgetValue);
+                idExpense--;
+            }
+            deleteItemFromUI(idCopy);
+        } 
+    }
+    
+    //remove item from UI
+    var deleteItemFromUI = function(id){
+        document.getElementById(id).parentNode.removeChild(document.getElementById(id));
     }
 
     var clearFields = function () {
@@ -168,5 +224,6 @@ var appController = (function (budgetCtrl, uiCtrl) {
     }
 
     init();
+
 })(budgetController, uiController);
 
