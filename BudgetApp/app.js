@@ -19,11 +19,25 @@ var budgetController = (function () {
         } else {
             totalExpense = parseInt(this.expenseArray[index].value) + totalExpense;
             document.querySelector(classN).textContent = '-' + totalExpense;
-        }
+            var indiPercent=Math.floor( ((this.expenseArray[index].value) * 100) / (totalIncome) );
+            if(indiPercent > 0 && indiPercent < 100)
+               this.expenseArray[index].percentage = indiPercent;
+            else
+            this.expenseArray[index].percentage = '--';
+        }   
 
         var totalBudget = totalIncome - totalExpense;
 
         document.querySelector(availClass).textContent = totalBudget;
+    }
+
+    var calculateTotalExpensePercent = function(){
+        var totalExxpencePercent = ((totalExpense) * 100) / (totalIncome - totalExpense);
+        if (totalExxpencePercent > 0) {
+            return Math.floor(totalExxpencePercent)+"%";
+        } else { 
+            return '--';
+        }
     }
 
     return {
@@ -31,7 +45,8 @@ var budgetController = (function () {
         expenseArray: [],
         incomeProto,
         expenseProto,
-        budgetManager
+        budgetManager,
+        calculateTotalExpensePercent
     }
 })();
 
@@ -45,12 +60,13 @@ var uiController = (function () {
         addHTMLExpense: '.expenses__list',
         totalIncomeClass: '.budget__income--value',
         totalExpenseClass: '.budget__expenses--value',
-        totalBudgetValue: '.budget__value'
+        totalBudgetValue: '.budget__value',
+        removeExpenseOrIncome: '.item__delete--btn',
+        expensePercentage: '.budget__expenses--percentage'
     };
 
     var addHTMLToPage = function (obj, type) {
         var html, newHTML;
-        console.log(obj.id + "         " + obj.description + "         " + obj.value);
         if (type === 'income') {
 
             html = '<div class="item clearfix" id="income-%incomeId%"><div class="item__description">%incomeDescription%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
@@ -61,11 +77,12 @@ var uiController = (function () {
             document.querySelector(className.addHTMLIncome).insertAdjacentHTML('beforeend', newHTML);
         } else {
 
-            html = '<div class="item clearfix" id="expense-%expenseId%"><div class="item__description">%expenseDescription%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+            html = '<div class="item clearfix" id="expense-%expenseId%"><div class="item__description">%expenseDescription%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">%percentage%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
 
             newHTML = html.replace('%expenseId%', 'obj.id');
             newHTML = newHTML.replace('%expenseDescription%', obj.description);
             newHTML = newHTML.replace('%value%', obj.value);
+            newHTML = newHTML.replace('%percentage%', obj.percentage+'%');
             document.querySelector(className.addHTMLExpense).insertAdjacentHTML('beforeend', newHTML);
         }
     }
@@ -89,26 +106,33 @@ var appController = (function (budgetCtrl, uiCtrl) {
         if (type === 'income') {
             budgetCtrl.incomeArray.push(new budgetCtrl.incomeProto(idIncome, description, value));
 
-            //add item to UI
-            uiCtrl.addHTMLToPage(budgetCtrl.incomeArray[idIncome - 1], type);
-
             //updating total expense and income
             budgetCtrl.budgetManager(type, idIncome - 1, uiController.className.totalIncomeClass, uiController.className.totalBudgetValue);
+
+            //add item to UI
+            uiCtrl.addHTMLToPage(budgetCtrl.incomeArray[idIncome - 1], type);
 
             idIncome++;
         } else {
             budgetCtrl.expenseArray.push(new budgetCtrl.expenseProto(idExpense, description, value));
 
-            //add item to UI
-            uiCtrl.addHTMLToPage(budgetCtrl.expenseArray[idExpense - 1], type);
-
             //updating total expense and income
             budgetCtrl.budgetManager(type, idExpense - 1, uiController.className.totalExpenseClass, uiController.className.totalBudgetValue);
+
+            //add item to UI
+            uiCtrl.addHTMLToPage(budgetCtrl.expenseArray[idExpense - 1], type);
 
             idExpense++;
         }
 
+        //update total percentage expence 
+        document.querySelector(uiCtrl.className.expensePercentage).textContent = budgetCtrl.calculateTotalExpensePercent();
 
+        // if remove item is pressed
+
+        document.querySelector(uiCtrl.className.removeExpenseOrIncome).addEventListener('click', function () {
+            console.log("remove item clicked")
+        });
 
         //cleaning value from description value
         clearFields();
@@ -131,7 +155,7 @@ var appController = (function (budgetCtrl, uiCtrl) {
         document.querySelector(uiController.className.totalIncomeClass).textContent = 0;
         document.querySelector(uiController.className.totalExpenseClass).textContent = 0;
         document.querySelector(uiController.className.totalBudgetValue).textContent = 0;
-        
+
         //handle event listner
         document.querySelector(uiCtrl.className.addButton).addEventListener('click', eventCodeHandle);
 
