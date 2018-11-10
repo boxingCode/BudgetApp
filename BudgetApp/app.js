@@ -1,6 +1,6 @@
 var budgetController = (function () {
 
-    var totalIncome = 0, totalExpense = 0;
+    var totalIncome = 0.00, totalExpense = 0.00;
     var incomeProto = function (id, description, value) {
         this.id = id;
         this.description = description;
@@ -15,10 +15,10 @@ var budgetController = (function () {
 
     var budgetManager = function (type, index, classN, availClass) {
         if (type === 'income') {
-            totalIncome = parseInt(this.incomeArray[index].value) + totalIncome;
+            totalIncome = parseFloat(this.incomeArray[index].value) + totalIncome;
             document.querySelector(classN).textContent = '+' + totalIncome;
         } else {
-            totalExpense = parseInt(this.expenseArray[index].value) + totalExpense;
+            totalExpense = parseFloat(this.expenseArray[index].value) + totalExpense;
             document.querySelector(classN).textContent = '-' + totalExpense;
             var indiPercent=Math.floor( ((this.expenseArray[index].value) * 100) / (totalIncome) );
             if(indiPercent > 0 && indiPercent < 100)
@@ -28,7 +28,7 @@ var budgetController = (function () {
         }   
 
         var totalBudget = totalIncome - totalExpense;
-
+        totalBudget = parseFloat(totalBudget).toFixed(2);
         document.querySelector(availClass).textContent = totalBudget;
     }
 
@@ -94,7 +94,8 @@ var uiController = (function () {
         totalExpenseClass: '.budget__expenses--value',
         totalBudgetValue: '.budget__value',
         expensePercentage: '.budget__expenses--percentage',
-        containerClass : '.container'
+        containerClass : '.container',
+        MonthUpdate : '.budget__title--month'
     };
 
     var addHTMLToPage = function (obj, type) {
@@ -134,7 +135,8 @@ var appController = (function (budgetCtrl, uiCtrl) {
         type = document.querySelector(uiCtrl.className.addType).value;
         description = document.querySelector(uiCtrl.className.addDescription).value;
         value = document.querySelector(uiCtrl.className.addValue).value;
-
+        value = parseFloat( value ).toFixed(2);
+        console.log("------------------"+value)
         //add item to list
         if (type === 'income') {
             budgetCtrl.incomeArray.push(new budgetCtrl.incomeProto(idIncome, description, value));
@@ -211,6 +213,8 @@ var appController = (function (budgetCtrl, uiCtrl) {
         document.querySelector(uiController.className.totalIncomeClass).textContent = 0;
         document.querySelector(uiController.className.totalExpenseClass).textContent = 0;
         document.querySelector(uiController.className.totalBudgetValue).textContent = 0;
+        
+        document.querySelector(uiController.className.MonthUpdate).textContent = displayMonth();
 
         //handle event listner
         document.querySelector(uiCtrl.className.addButton).addEventListener('click', eventCodeHandle);
@@ -220,7 +224,13 @@ var appController = (function (budgetCtrl, uiCtrl) {
                 eventCodeHandle();
             }
         })
+    }
 
+    var displayMonth = function(){
+        var now = new Date();
+        var month = now.getMonth();
+        var dateArr = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        return dateArr[month]+", "+ now.getFullYear();
     }
 
     init();
